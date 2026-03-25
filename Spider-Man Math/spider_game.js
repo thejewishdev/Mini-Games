@@ -37,33 +37,65 @@ document.body.style.background = selected.bg
 
 
 
-// Game logic
-let num1, num2, correctAnswer
-let score = 0
+let num1, num2, correctAnswer, operator;
+let score = 0;
+let attempts = 3;
 
 function generateQuestion() {
-  num1 = Math.floor(Math.random() * 10)
-  num2 = Math.floor(Math.random() * 10)
+  const ops = ['+', '-', '*', '/'];
+  operator = ops[Math.floor(Math.random() * ops.length)];
 
-  correctAnswer = num1 + num2
+  if (operator === '/') {
+    // We pick the answer first to ensure division is always a whole number
+    let possibleAnswer = Math.floor(Math.random() * 9) + 1;
+    num2 = Math.floor(Math.random() * 9) + 1;
+    num1 = possibleAnswer * num2;
+    correctAnswer = possibleAnswer;
+  } else if (operator === '*') {
+    num1 = Math.floor(Math.random() * 10);
+    num2 = Math.floor(Math.random() * 10);
+    correctAnswer = num1 * num2;
+  } else if (operator === '-') {
+    num1 = Math.floor(Math.random() * 20) + 10;
+    num2 = Math.floor(Math.random() * 10);
+    correctAnswer = num1 - num2;
+  } else {
+    num1 = Math.floor(Math.random() * 20);
+    num2 = Math.floor(Math.random() * 20);
+    correctAnswer = num1 + num2;
+  }
 
-  document.getElementById("question").innerText = num1 + " + " + num2
-  document.getElementById("answer").value = ""
+  document.getElementById("question").innerText = `${num1} ${operator} ${num2}`;
+  document.getElementById("answer").value = "";
 }
 
 function checkAnswer() {
-  let userAnswer = parseInt(document.getElementById("answer").value)
+  const userAnswer = parseInt(document.getElementById("answer").value);
 
   if (userAnswer === correctAnswer) {
-    score++
-    alert("Nice! 🕷️")
+    score++;
+    alert("Great Shot! 🕷️");
+    generateQuestion();
   } else {
-    alert("Oops! The correct answer was " + correctAnswer)
+    attempts--;
+    if (attempts > 0) {
+      alert(`Missed! You have ${attempts} attempts left.`);
+    } else {
+      alert(`Game Over! Final Score: ${score}. Try again?`);
+      score = 0;
+      attempts = 3;
+      generateQuestion();
+    }
   }
 
-  document.getElementById("score").innerText = "Score: " + score
-  generateQuestion()
+  updateDisplay();
+}
+
+function updateDisplay() {
+  document.getElementById("score").innerText = "Score: " + score;
+  // This updates the hearts: 3 attempts = ❤️❤️❤️
+  document.getElementById("lives").innerText = "❤️".repeat(attempts);
 }
 
 // Start game
-generateQuestion()
+generateQuestion();
