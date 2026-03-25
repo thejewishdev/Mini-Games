@@ -1,144 +1,148 @@
-var hero = localStorage.getItem("selectedHero")
+var hero = localStorage.getItem("selectedHero");
 
 var turtles = {
   "Leo" : "#00aae6",
   "Mickey" : "#ffa500",
   "Raph" : "#e3331c",
   "Dony" : "#aa1bdd"
-}
+};
 
-var cells = document.querySelectorAll("td")
-var resetButton = document.querySelector("#reset")
-var startButton = document.querySelector("#start")
-var gameStarted = false
+var cells = document.querySelectorAll("td");
+var resetButton = document.querySelector("#reset");
+var startButton = document.querySelector("#start");
+var gameStarted = false;
+var aiTimeout; // Variable to track the AI's "thinking" timer
 
-
-
-// ✅ Winning combinations (indexes of cells)
+// ✅ Winning combinations
 var winCombos = [
-  [0,1,2],
-  [3,4,5],
-  [6,7,8],
-  [0,3,6],
-  [1,4,7],
-  [2,5,8],
-  [0,4,8],
-  [2,4,6]
+  [0,1,2], [3,4,5], [6,7,8],
+  [0,3,6], [1,4,7], [2,5,8],
+  [0,4,8], [2,4,6]
 ];
 
+// --- 🧠 AI LOGIC HELPERS ---
 
-
-// Start the game
-function startGame() {
-  gameStarted = true
-  boardReset(cells)
-  alert("Game Started!")
+function findWinningMove(player) {
+  for (let combo of winCombos) {
+    const pieces = combo.map(index => cells[index].textContent);
+    if (pieces.filter(val => val === player).length === 2 &&
+        pieces.filter(val => val === " ").length === 1) {
+      return combo[pieces.indexOf(" ")];
+    }
+  }
+  return null;
 }
 
+// --- 🎮 GAME FUNCTIONS ---
 
-// Reset board
+// This handles both Start and Reset now
+function startGame() {
+  // Clear any pending AI moves from previous rounds
+  clearTimeout(aiTimeout);
+
+  boardReset(cells);
+  gameStarted = true;
+
+  // Shredder makes the first move!
+  aiTimeout = setTimeout(() => {
+    aiPick(cells);
+  }, 400);
+}
+
 function boardReset(board) {
   for (var cell of board) {
-    cell.textContent = " "
+    cell.textContent = " ";
   }
-  gameStarted = true
 }
 
-
-
-// ✅ Check winner
 function checkWinner(player) {
   return winCombos.some(combo => {
     return combo.every(index => {
-      return cells[index].textContent === player
-    })
-  })
+      return cells[index].textContent === player;
+    });
+  });
 }
 
-
-
-// ✅ Check draw
 function checkDraw() {
-  return [...cells].every(cell => cell.textContent !== " ")
+  return [...cells].every(cell => cell.textContent !== " ");
 }
 
+function aiPick(boardCells) {
+  if (!gameStarted) return;
 
+  let targetIndex = null;
 
-// AI turn
-function aiPick(boardCells){
+  // 1. WIN: Can Shredder win?
+  targetIndex = findWinningMove("X");
 
-    var emptyCells = []
+  // 2. BLOCK: Is the Hero about to win?
+  if (targetIndex === null) {
+    targetIndex = findWinningMove("O");
+  }
 
+  // 3. CENTER: Grab the middle
+  if (targetIndex === null && boardCells[4].textContent === " ") {
+    targetIndex = 4;
+  }
+
+  // 4. RANDOM: Pick whatever is left
+  if (targetIndex === null) {
+    var emptyIndexes = [];
     for (let i = 0; i < boardCells.length; i++) {
-      if (boardCells[i].textContent === " ") {
-        emptyCells.push(boardCells[i])
-      }
+      if (boardCells[i].textContent === " ") emptyIndexes.push(i);
     }
+    if (emptyIndexes.length === 0) return;
+    targetIndex = emptyIndexes[Math.floor(Math.random() * emptyIndexes.length)];
+  }
 
-    if (emptyCells.length === 0) return;
+  var cell = boardCells[targetIndex];
+  cell.textContent = "X";
+  cell.style.color = "#a5a8bb";
 
-    var randomIndex = Math.floor(Math.random() * emptyCells.length);
-    var cell = emptyCells[randomIndex];
+  if (checkWinner("X")) {
+    alert("Shredder Wins!");
+    gameStarted = false;
+    return;
+  }
 
-    cell.textContent = "X";
-    cell.style.color = "#a5a8bb";
-
-
-    // ✅ Check if AI wins
-    if (checkWinner("X")) {
-      alert("Shredder Wins!")
-      gameStarted = false
-      return
-    }
-
-    // ✅ Check draw
-    if (checkDraw()) {
-      alert("Draw!")
-      gameStarted = false
-    }
+  if (checkDraw()) {
+    alert("Draw!");
+    gameStarted = false;
+  }
 }
 
-
-
-// Player turn
 function playerMove(cell) {
   if (cell.textContent !== " " || !gameStarted) return;
 
   cell.textContent = "O";
-  cell.style.color = turtles[hero];
+  cell.style.color = turtles[hero] || "#000";
 
-
-  // ✅ Check if player wins
   if (checkWinner("O")) {
-    alert(hero + " Wins!")
-    gameStarted = false
-    return
+    alert(hero + " Wins!");
+    gameStarted = false;
+    return;
   }
 
-  // ✅ Check draw before AI moves
   if (checkDraw()) {
-    alert("Draw!")
-    gameStarted = false
-    return
+    alert("Draw!");
+    gameStarted = false;
+    return;
   }
 
-  // AI move
-  aiPick(cells);
+  // AI counter-attacks
+  aiTimeout = setTimeout(() => {
+    aiPick(cells);
+  }, 500);
 }
 
+// --- 🖱️ EVENT LISTENERS ---
 
-
-
-// Event listeners
+// Both buttons now trigger the same "Start/AI First" logic
 startButton.addEventListener("click", startGame);
-
-resetButton.addEventListener("click", function() {
-  boardReset(cells);
-});
+resetButton.addEventListener("click", startGame);
 
 cells.forEach(cell => {
   cell.addEventListener("click", () => {
-    if (!gameStarted) return;
     playerMove(cell);
   });
 });
