@@ -24,6 +24,15 @@ header {
   box-shadow: 0 0 20px red;
 }
 
+/* Add this to your existing CSS */
+#lives {
+  font-size: 24px;
+  margin-bottom: 10px;
+  letter-spacing: 5px;
+  text-shadow: 0 0 10px red;
+}
+
+
 /* Question */
 #question {
   font-size: 28px;
