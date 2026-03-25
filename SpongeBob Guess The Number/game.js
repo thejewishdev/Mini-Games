@@ -19,7 +19,7 @@ heroDisplay.style.color = heroes[hero];
 var min = 1;
 var max = 100;
 var winningNum = Math.floor(Math.random() * (max - min + 1)) + min;
-var attempts = 10;
+var attempts = 5;
 
 // DOM elements
 var guessBtn = document.getElementById("guess-btn");
